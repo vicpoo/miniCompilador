@@ -7,54 +7,56 @@ import java.nio.file.*;
 public class GestorArchivos {
     
     public String leerArchivo(String ruta) throws IOException {
-        return new String(Files.readAllBytes(Paths.get(ruta)));
+        Path path = Paths.get(ruta);
+        if (!Files.exists(path)) {
+            throw new IOException("El archivo no existe: " + ruta);
+        }
+        return new String(Files.readAllBytes(path));
     }
     
     public void escribirArchivo(String ruta, String contenido) throws IOException {
-        Files.write(Paths.get(ruta), contenido.getBytes());
+        Path path = Paths.get(ruta);
+        Files.write(path, contenido.getBytes());
     }
     
     public boolean archivoExiste(String ruta) {
-        return Files.exists(Paths.get(ruta));
+        if (ruta == null || ruta.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            Path path = Paths.get(ruta);
+            return Files.exists(path);
+        } catch (InvalidPathException e) {
+            return false;
+        }
     }
     
     public void crearArchivoEjemplo(String ruta) throws IOException {
-        String ejemplo = "// Programa de ejemplo en Élfico\n" +
-                        "// Hola Mundo y operaciones básicas\n\n" +
+        String ejemplo = "// Programa Hola Mundo en Élfico\n" +
+                        "// Este es un programa de ejemplo\n\n" +
+                        "tengwa mensaje = \"Namárië! Bienvenido a la Tierra Media\";\n" +
+                        "tira(mensaje);\n\n" +
                         "nampat edad = 25;\n" +
-                        "linta altura = 1.75;\n" +
-                        "tengwa mensaje = \"A Elbereth Gilthoniel!\";\n\n" +
-                        "tira(mensaje);\n" +
+                        "linta altura = 1.75;\n\n" +
                         "tira(\"Edad: \");\n" +
                         "tira(edad);\n" +
                         "tira(\"Altura: \");\n" +
                         "tira(altura);\n\n" +
-                        "// Operaciones matemáticas\n" +
                         "nampat suma = edad + 10;\n" +
-                        "nampat producto = edad * 2;\n" +
                         "tira(\"Suma: \");\n" +
-                        "tira(suma);\n" +
-                        "tira(\"Producto: \");\n" +
-                        "tira(producto);\n\n" +
-                        "// Estructura condicional\n" +
+                        "tira(suma);\n\n" +
                         "anin(edad > 18) {\n" +
-                        "    tira(\"Eres mayor de edad en la Tierra Media\");\n" +
+                        "    tira(\"Eres mayor de edad\");\n" +
                         "} penneth {\n" +
-                        "    tira(\"Eres un joven hobbit\");\n" +
+                        "    tira(\"Eres menor de edad\");\n" +
                         "}\n\n" +
-                        "// Ciclo while\n" +
                         "nampat contador = 1;\n" +
-                        "nauva(contador <= 5) {\n" +
-                        "    tira(\"Cuenta élfica: \");\n" +
+                        "nauva(contador <= 3) {\n" +
+                        "    tira(\"Cuenta: \");\n" +
                         "    tira(contador);\n" +
                         "    contador = contador + 1;\n" +
                         "}\n\n" +
-                        "// Ciclo for\n" +
-                        "ana(nampat i = 1; i <= 3; i = i + 1) {\n" +
-                        "    tira(\"Valor de i: \");\n" +
-                        "    tira(i);\n" +
-                        "}\n\n" +
-                        "tira(\"Namárië! (Adiós en élfico)\");\n";
+                        "tira(\"Namárië!\");\n";
         
         escribirArchivo(ruta, ejemplo);
     }

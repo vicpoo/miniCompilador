@@ -1,0 +1,5 @@
+nampat a = 12;
+nampat b = 8;
+
+tengwa suma = a + b;
+tira(suma);

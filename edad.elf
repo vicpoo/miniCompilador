@@ -1,0 +1,19 @@
+tengwa mensajeBienvenida = "verificador de edad";
+tira(mensajeBienvenida);
+
+tira("porfavor, ingresa tu edad:");
+lanna(edad);
+
+tira("tu edad es:");
+
+tira(edad);
+
+anin(edad >= 18) {
+    tira("Eres mayor de edad, puedes pasar");
+    tira("¡Namárië! Que los Valar te guarden");
+} penneth {
+    tira("Eres menor de edad, no puedes pasar");
+    tira("Vuelve cuando crezcas, pequeño hobbit");
+}
+
+tira("Fin del programa");

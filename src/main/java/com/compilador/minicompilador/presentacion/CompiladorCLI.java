@@ -23,6 +23,46 @@ public class CompiladorCLI {
         return sb.toString();
     }
     
+    private String limpiarRuta(String ruta) {
+        if (ruta == null || ruta.trim().isEmpty()) {
+            return "";
+        }
+        
+        String limpia = ruta.trim();
+        
+        // Eliminar prefijos de PowerShell como "& '"
+        if (limpia.startsWith("& '")) {
+            limpia = limpia.substring(3);
+        }
+        if (limpia.startsWith("& \"")) {
+            limpia = limpia.substring(3);
+        }
+        
+        // Eliminar comillas simples y dobles al inicio y final
+        if (limpia.startsWith("'") && limpia.endsWith("'")) {
+            limpia = limpia.substring(1, limpia.length() - 1);
+        }
+        if (limpia.startsWith("\"") && limpia.endsWith("\"")) {
+            limpia = limpia.substring(1, limpia.length() - 1);
+        }
+        
+        // Eliminar caracteres de escape y limpiar
+        limpia = limpia.replace("\\", "");
+        
+        // Eliminar cualquier prefijo de comando de PowerShell
+        String[] prefijos = {"& ", ".\\", "./"};
+        for (String prefijo : prefijos) {
+            if (limpia.startsWith(prefijo)) {
+                limpia = limpia.substring(prefijo.length());
+            }
+        }
+        
+        // Eliminar espacios extras
+        limpia = limpia.trim();
+        
+        return limpia;
+    }
+    
     public void iniciar(String[] args) {
         System.out.println("\n" + repetir("=", 60));
         System.out.println("   COMPILADOR DEL LENGUAJE ÉLFICO - Tierra Media");
@@ -47,7 +87,7 @@ public class CompiladorCLI {
             System.out.println("\n" + repetir("-", 40));
             System.out.println("OPCIONES:");
             System.out.println("  1. Compilar archivo de ejemplo (programa.elf)");
-            System.out.println("  2. Compilar archivo específico");
+            System.out.println("  2. Compilar archivo específico (puede arrastrar el archivo)");
             System.out.println("  3. Crear nuevo archivo fuente");
             System.out.println("  4. Salir");
             System.out.print("\nSeleccione una opción: ");
@@ -59,8 +99,12 @@ public class CompiladorCLI {
                     compilarArchivo("programa.elf");
                     break;
                 case "2":
-                    System.out.print("Ingrese la ruta del archivo: ");
-                    String ruta = scanner.nextLine().trim();
+                    System.out.println("\n📂 Ingrese la ruta del archivo o arrastre el archivo aquí:");
+                    System.out.println("💡 Puede arrastrar el archivo directamente desde el explorador");
+                    System.out.print(">> ");
+                    String rutaOriginal = scanner.nextLine().trim();
+                    String ruta = limpiarRuta(rutaOriginal);
+                    System.out.println("📁 Ruta procesada: " + ruta);
                     compilarArchivo(ruta);
                     break;
                 case "3":
@@ -80,6 +124,12 @@ public class CompiladorCLI {
         try {
             if (!gestorArchivos.archivoExiste(ruta)) {
                 System.out.println("❌ El archivo no existe: " + ruta);
+                System.out.println("\n💡 SUGERENCIAS:");
+                System.out.println("   1. Asegúrese de que el archivo tenga extensión .elf");
+                System.out.println("   2. Verifique que el archivo esté en la ubicación correcta");
+                System.out.println("   3. Intente escribir solo el nombre si está en la misma carpeta");
+                System.out.println("   4. O use la ruta completa sin comillas ni caracteres especiales");
+                System.out.println("\n📝 Ejemplo de ruta válida: D:\\carpeta\\archivo.elf");
                 return;
             }
             
@@ -99,11 +149,11 @@ public class CompiladorCLI {
     }
     
     private void crearNuevoArchivo(Scanner scanner) {
-        System.out.print("Ingrese el nombre del archivo (sin extensión): ");
+        System.out.print("\n📝 Ingrese el nombre del archivo (sin extensión): ");
         String nombre = scanner.nextLine().trim();
         String ruta = nombre + ".elf";
         
-        System.out.println("\nIngrese el código fuente (línea vacía para finalizar):");
+        System.out.println("\n✍️ Ingrese el código fuente (línea vacía para finalizar):");
         System.out.println("(Puede escribir código en lenguaje Élfico)");
         System.out.println(repetir("-", 40));
         
