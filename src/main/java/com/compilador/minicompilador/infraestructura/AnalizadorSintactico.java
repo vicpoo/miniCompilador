@@ -33,8 +33,10 @@ public class AnalizadorSintactico {
             programa();
             return errores.isEmpty();
         } catch (Exception e) {
-            errores.add(new ErrorCompilacion(ErrorCompilacion.TipoError.SINTACTICO, 
-                e.getMessage(), obtenerTokenActual().getLinea(), obtenerTokenActual().getColumna()));
+            if (errores.isEmpty()) {
+                errores.add(new ErrorCompilacion(ErrorCompilacion.TipoError.SINTACTICO, 
+                    e.getMessage(), obtenerTokenActual().getLinea(), obtenerTokenActual().getColumna()));
+            }
             return false;
         }
     }
@@ -46,39 +48,64 @@ public class AnalizadorSintactico {
     }
     
     private void sentencia() {
-        if (esTipoDato()) {
+        Token actual = obtenerTokenActual();
+        
+        if (actual.getTipo() == TipoToken.KEY_NAMPAT || 
+            actual.getTipo() == TipoToken.KEY_LINTA || 
+            actual.getTipo() == TipoToken.KEY_TENGWA) {
+            match(actual.getTipo());
             declaracion();
-        } else if (match(TipoToken.KEY_ANIN)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_ANIN) {
+            match(TipoToken.KEY_ANIN);
             sentenciaIf();
-        } else if (match(TipoToken.KEY_NAUVA)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_NAUVA) {
+            match(TipoToken.KEY_NAUVA);
             sentenciaWhile();
-        } else if (match(TipoToken.KEY_CARO)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_CARO) {
+            match(TipoToken.KEY_CARO);
             sentenciaDoWhile();
-        } else if (match(TipoToken.KEY_ANA)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_ANA) {
+            match(TipoToken.KEY_ANA);
             sentenciaFor();
-        } else if (match(TipoToken.KEY_LAVA)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_LAVA) {
+            match(TipoToken.KEY_LAVA);
             sentenciaSwitch();
-        } else if (match(TipoToken.KEY_TIRA)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_TIRA) {
+            match(TipoToken.KEY_TIRA);
             sentenciaPrint();
-        } else if (match(TipoToken.KEY_LANNA)) {
+        } 
+        else if (actual.getTipo() == TipoToken.KEY_LANNA) {
+            match(TipoToken.KEY_LANNA);
             sentenciaRead();
-        } else if (match(TipoToken.ID)) {
+        } 
+        else if (actual.getTipo() == TipoToken.ID) {
+            match(TipoToken.ID);
             asignacion();
-        } else if (match(TipoToken.INI_BLOQUE)) {
+        } 
+        else if (actual.getTipo() == TipoToken.INI_BLOQUE) {
+            match(TipoToken.INI_BLOQUE);
             bloque();
-        } else {
-            error("Se esperaba una sentencia válida");
+        } 
+        else if (actual.getTipo() != TipoToken.EOF) {
+            error("Se esperaba una sentencia válida, pero se encontró: " + actual.getTipo());
         }
     }
     
     private void declaracion() {
-        TipoToken tipo = tipoDato();
+        TipoToken tipo = obtenerTokenAnterior().getTipo();
         Token id = esperar(TipoToken.ID);
         
         tablaSimbolos.definir(id.getLexema(), tipo);
         codigoIntermedio.add("DECLARE " + id.getLexema() + " : " + tipo);
         
-        if (match(TipoToken.ASIGNA)) {
+        if (obtenerTokenActual().getTipo() == TipoToken.ASIGNA) {
+            match(TipoToken.ASIGNA);
             String exprResult = expresion();
             esperar(TipoToken.FIN_SENTENCIA);
             codigoIntermedio.add(id.getLexema() + " = " + exprResult);
@@ -88,8 +115,7 @@ public class AnalizadorSintactico {
     }
     
     private void asignacion() {
-        Token id = obtenerTokenActual();
-        consumir(TipoToken.ID);
+        Token id = obtenerTokenAnterior();
         esperar(TipoToken.ASIGNA);
         String exprResult = expresion();
         esperar(TipoToken.FIN_SENTENCIA);
@@ -112,12 +138,27 @@ public class AnalizadorSintactico {
         int labelEnd = generarLabel();
         
         codigoIntermedio.add("IF " + condicion + " == 0 GOTO L" + labelElse);
-        sentencia();
+        
+        // Verificar si hay un bloque o una sentencia simple
+        if (obtenerTokenActual().getTipo() == TipoToken.INI_BLOQUE) {
+            match(TipoToken.INI_BLOQUE);
+            bloque();
+        } else {
+            sentencia();
+        }
+        
         codigoIntermedio.add("GOTO L" + labelEnd);
         codigoIntermedio.add("L" + labelElse + ":");
         
-        if (match(TipoToken.KEY_PENNETH)) {
-            sentencia();
+        // Verificar else
+        if (obtenerTokenActual().getTipo() == TipoToken.KEY_PENNETH) {
+            match(TipoToken.KEY_PENNETH);
+            if (obtenerTokenActual().getTipo() == TipoToken.INI_BLOQUE) {
+                match(TipoToken.INI_BLOQUE);
+                bloque();
+            } else {
+                sentencia();
+            }
         }
         
         codigoIntermedio.add("L" + labelEnd + ":");
@@ -133,7 +174,14 @@ public class AnalizadorSintactico {
         esperar(TipoToken.CIERRA_PARENTESIS);
         
         codigoIntermedio.add("IF " + condicion + " == 0 GOTO L" + labelEnd);
-        sentencia();
+        
+        if (obtenerTokenActual().getTipo() == TipoToken.INI_BLOQUE) {
+            match(TipoToken.INI_BLOQUE);
+            bloque();
+        } else {
+            sentencia();
+        }
+        
         codigoIntermedio.add("GOTO L" + labelStart);
         codigoIntermedio.add("L" + labelEnd + ":");
     }
@@ -141,7 +189,14 @@ public class AnalizadorSintactico {
     private void sentenciaDoWhile() {
         int labelStart = generarLabel();
         codigoIntermedio.add("L" + labelStart + ":");
-        sentencia();
+        
+        if (obtenerTokenActual().getTipo() == TipoToken.INI_BLOQUE) {
+            match(TipoToken.INI_BLOQUE);
+            bloque();
+        } else {
+            sentencia();
+        }
+        
         esperar(TipoToken.KEY_NAUVA);
         esperar(TipoToken.ABRE_PARENTESIS);
         String condicion = expresion();
@@ -153,43 +208,69 @@ public class AnalizadorSintactico {
     private void sentenciaFor() {
         esperar(TipoToken.ABRE_PARENTESIS);
         
-        // Inicialización
-        if (match(TipoToken.ID)) {
-            asignacion();
+        if (obtenerTokenActual().getTipo() == TipoToken.KEY_NAMPAT || 
+            obtenerTokenActual().getTipo() == TipoToken.KEY_LINTA || 
+            obtenerTokenActual().getTipo() == TipoToken.KEY_TENGWA) {
+            match(obtenerTokenActual().getTipo());
+            TipoToken tipo = obtenerTokenAnterior().getTipo();
+            Token id = esperar(TipoToken.ID);
+            tablaSimbolos.definir(id.getLexema(), tipo);
+            codigoIntermedio.add("DECLARE " + id.getLexema() + " : " + tipo);
+            if (obtenerTokenActual().getTipo() == TipoToken.ASIGNA) {
+                match(TipoToken.ASIGNA);
+                String exprResult = expresion();
+                codigoIntermedio.add(id.getLexema() + " = " + exprResult);
+            }
+        } else if (obtenerTokenActual().getTipo() == TipoToken.ID) {
+            match(TipoToken.ID);
+            Token id = obtenerTokenAnterior();
+            esperar(TipoToken.ASIGNA);
+            String exprResult = expresion();
+            codigoIntermedio.add(id.getLexema() + " = " + exprResult);
+        }
+        
+        esperar(TipoToken.FIN_SENTENCIA);
+        
+        String condicion = "1";
+        if (obtenerTokenActual().getTipo() != TipoToken.FIN_SENTENCIA) {
+            condicion = expresion();
+            esperar(TipoToken.FIN_SENTENCIA);
         } else {
             match(TipoToken.FIN_SENTENCIA);
         }
         
-        // Condición
-        String condicion = "1";
-        if (!match(TipoToken.FIN_SENTENCIA)) {
-            condicion = expresion();
-            esperar(TipoToken.FIN_SENTENCIA);
-        }
-        
-        // Incremento
         List<String> incremento = new ArrayList<>();
-        if (!match(TipoToken.CIERRA_PARENTESIS)) {
-            while (!match(TipoToken.CIERRA_PARENTESIS) && !esFin()) {
-                if (match(TipoToken.ID)) {
+        if (obtenerTokenActual().getTipo() != TipoToken.CIERRA_PARENTESIS) {
+            while (obtenerTokenActual().getTipo() != TipoToken.CIERRA_PARENTESIS && !esFin()) {
+                if (obtenerTokenActual().getTipo() == TipoToken.ID) {
+                    match(TipoToken.ID);
                     Token id = obtenerTokenAnterior();
-                    if (match(TipoToken.ASIGNA)) {
+                    if (obtenerTokenActual().getTipo() == TipoToken.ASIGNA) {
+                        match(TipoToken.ASIGNA);
                         String expr = expresion();
                         incremento.add(id.getLexema() + " = " + expr);
                     }
                 }
-                if (!match(TipoToken.CIERRA_PARENTESIS)) {
+                if (obtenerTokenActual().getTipo() != TipoToken.CIERRA_PARENTESIS) {
                     posicion++;
                 }
             }
         }
+        
+        esperar(TipoToken.CIERRA_PARENTESIS);
         
         int labelStart = generarLabel();
         int labelEnd = generarLabel();
         
         codigoIntermedio.add("L" + labelStart + ":");
         codigoIntermedio.add("IF " + condicion + " == 0 GOTO L" + labelEnd);
-        sentencia();
+        
+        if (obtenerTokenActual().getTipo() == TipoToken.INI_BLOQUE) {
+            match(TipoToken.INI_BLOQUE);
+            bloque();
+        } else {
+            sentencia();
+        }
         
         for (String inc : incremento) {
             codigoIntermedio.add(inc);
@@ -208,11 +289,14 @@ public class AnalizadorSintactico {
         int defaultLabel = generarLabel();
         int endLabel = generarLabel();
         
-        while (match(TipoToken.KEY_TIRNO)) {
+        while (obtenerTokenActual().getTipo() == TipoToken.KEY_TIRNO) {
+            match(TipoToken.KEY_TIRNO);
             Token valor = null;
-            if (match(TipoToken.NUMERO)) {
+            if (obtenerTokenActual().getTipo() == TipoToken.NUMERO) {
+                match(TipoToken.NUMERO);
                 valor = obtenerTokenAnterior();
-            } else if (match(TipoToken.CADENA)) {
+            } else if (obtenerTokenActual().getTipo() == TipoToken.CADENA) {
+                match(TipoToken.CADENA);
                 valor = obtenerTokenAnterior();
             } else {
                 error("Se esperaba un valor constante en case");
@@ -224,18 +308,24 @@ public class AnalizadorSintactico {
             codigoIntermedio.add("GOTO L" + defaultLabel);
             codigoIntermedio.add("L" + caseLabel + ":");
             
-            while (!esFin() && !match(TipoToken.KEY_TIRNO) && !match(TipoToken.KEY_PENNETH) && !match(TipoToken.FIN_BLOQUE)) {
+            while (!esFin() && 
+                   obtenerTokenActual().getTipo() != TipoToken.KEY_TIRNO && 
+                   obtenerTokenActual().getTipo() != TipoToken.KEY_PENNETH && 
+                   obtenerTokenActual().getTipo() != TipoToken.FIN_BLOQUE) {
                 sentencia();
             }
             
-            match(TipoToken.KEY_NORO);
+            if (obtenerTokenActual().getTipo() == TipoToken.KEY_NORO) {
+                match(TipoToken.KEY_NORO);
+            }
         }
         
-        if (match(TipoToken.KEY_PENNETH)) {
+        if (obtenerTokenActual().getTipo() == TipoToken.KEY_PENNETH) {
+            match(TipoToken.KEY_PENNETH);
             esperar(TipoToken.DOS_PUNTOS);
             codigoIntermedio.add("GOTO L" + defaultLabel);
             codigoIntermedio.add("L" + defaultLabel + ":");
-            while (!esFin() && !match(TipoToken.FIN_BLOQUE)) {
+            while (!esFin() && obtenerTokenActual().getTipo() != TipoToken.FIN_BLOQUE) {
                 sentencia();
             }
         }
@@ -249,7 +339,6 @@ public class AnalizadorSintactico {
         String valor = expresion();
         esperar(TipoToken.CIERRA_PARENTESIS);
         esperar(TipoToken.FIN_SENTENCIA);
-        
         codigoIntermedio.add("PRINT " + valor);
     }
     
@@ -258,7 +347,6 @@ public class AnalizadorSintactico {
         Token id = esperar(TipoToken.ID);
         esperar(TipoToken.CIERRA_PARENTESIS);
         esperar(TipoToken.FIN_SENTENCIA);
-        
         codigoIntermedio.add("READ " + id.getLexema());
     }
     
@@ -269,15 +357,18 @@ public class AnalizadorSintactico {
     private String expresionLogica() {
         String left = expresionComparacion();
         
-        while (match(TipoToken.OPERA_AND) || match(TipoToken.OPERA_OR)) {
-            Token op = obtenerTokenAnterior();
+        while (obtenerTokenActual().getTipo() == TipoToken.OPERA_AND || 
+               obtenerTokenActual().getTipo() == TipoToken.OPERA_OR) {
+            Token op = obtenerTokenActual();
+            match(op.getTipo());
             String right = expresionComparacion();
             String temp = generarTemp();
             codigoIntermedio.add(temp + " = " + left + " " + op.getLexema() + " " + right);
             left = temp;
         }
         
-        if (match(TipoToken.OPERA_NOT)) {
+        if (obtenerTokenActual().getTipo() == TipoToken.OPERA_NOT) {
+            match(TipoToken.OPERA_NOT);
             String right = expresionComparacion();
             String temp = generarTemp();
             codigoIntermedio.add(temp + " = not " + right);
@@ -290,10 +381,14 @@ public class AnalizadorSintactico {
     private String expresionComparacion() {
         String left = expresionAritmetica();
         
-        if (match(TipoToken.OPERA_MENOR) || match(TipoToken.OPERA_MAYOR) || 
-            match(TipoToken.OPERA_MENOR_IGUAL) || match(TipoToken.OPERA_MAYOR_IGUAL) ||
-            match(TipoToken.OPERA_IGUALDAD) || match(TipoToken.OPERA_DIFERENTE)) {
-            Token op = obtenerTokenAnterior();
+        if (obtenerTokenActual().getTipo() == TipoToken.OPERA_MENOR || 
+            obtenerTokenActual().getTipo() == TipoToken.OPERA_MAYOR || 
+            obtenerTokenActual().getTipo() == TipoToken.OPERA_MENOR_IGUAL ||
+            obtenerTokenActual().getTipo() == TipoToken.OPERA_MAYOR_IGUAL ||
+            obtenerTokenActual().getTipo() == TipoToken.OPERA_IGUALDAD || 
+            obtenerTokenActual().getTipo() == TipoToken.OPERA_DIFERENTE) {
+            Token op = obtenerTokenActual();
+            match(op.getTipo());
             String right = expresionAritmetica();
             String temp = generarTemp();
             codigoIntermedio.add(temp + " = " + left + " " + op.getLexema() + " " + right);
@@ -306,8 +401,10 @@ public class AnalizadorSintactico {
     private String expresionAritmetica() {
         String left = termino();
         
-        while (match(TipoToken.OPERA_SUMA) || match(TipoToken.OPERA_RESTA)) {
-            Token op = obtenerTokenAnterior();
+        while (obtenerTokenActual().getTipo() == TipoToken.OPERA_SUMA || 
+               obtenerTokenActual().getTipo() == TipoToken.OPERA_RESTA) {
+            Token op = obtenerTokenActual();
+            match(op.getTipo());
             String right = termino();
             String temp = generarTemp();
             codigoIntermedio.add(temp + " = " + left + " " + op.getLexema() + " " + right);
@@ -320,8 +417,10 @@ public class AnalizadorSintactico {
     private String termino() {
         String left = factor();
         
-        while (match(TipoToken.OPERA_MULT) || match(TipoToken.OPERA_DIVID)) {
-            Token op = obtenerTokenAnterior();
+        while (obtenerTokenActual().getTipo() == TipoToken.OPERA_MULT || 
+               obtenerTokenActual().getTipo() == TipoToken.OPERA_DIVID) {
+            Token op = obtenerTokenActual();
+            match(op.getTipo());
             String right = factor();
             String temp = generarTemp();
             codigoIntermedio.add(temp + " = " + left + " " + op.getLexema() + " " + right);
@@ -332,13 +431,17 @@ public class AnalizadorSintactico {
     }
     
     private String factor() {
-        if (match(TipoToken.NUMERO)) {
+        if (obtenerTokenActual().getTipo() == TipoToken.NUMERO) {
+            match(TipoToken.NUMERO);
             return obtenerTokenAnterior().getLexema();
-        } else if (match(TipoToken.NUMERO_DECIMAL)) {
+        } else if (obtenerTokenActual().getTipo() == TipoToken.NUMERO_DECIMAL) {
+            match(TipoToken.NUMERO_DECIMAL);
             return obtenerTokenAnterior().getLexema();
-        } else if (match(TipoToken.CADENA)) {
+        } else if (obtenerTokenActual().getTipo() == TipoToken.CADENA) {
+            match(TipoToken.CADENA);
             return "\"" + obtenerTokenAnterior().getLexema() + "\"";
-        } else if (match(TipoToken.ID)) {
+        } else if (obtenerTokenActual().getTipo() == TipoToken.ID) {
+            match(TipoToken.ID);
             Token id = obtenerTokenAnterior();
             TablaSimbolos.Simbolo simbolo = tablaSimbolos.buscar(id.getLexema());
             if (simbolo == null) {
@@ -346,7 +449,8 @@ public class AnalizadorSintactico {
                 return "0";
             }
             return id.getLexema();
-        } else if (match(TipoToken.ABRE_PARENTESIS)) {
+        } else if (obtenerTokenActual().getTipo() == TipoToken.ABRE_PARENTESIS) {
+            match(TipoToken.ABRE_PARENTESIS);
             String expr = expresion();
             esperar(TipoToken.CIERRA_PARENTESIS);
             return expr;
@@ -357,23 +461,10 @@ public class AnalizadorSintactico {
     }
     
     private void bloque() {
-        esperar(TipoToken.INI_BLOQUE);
-        while (!esFin() && !match(TipoToken.FIN_BLOQUE)) {
+        while (!esFin() && obtenerTokenActual().getTipo() != TipoToken.FIN_BLOQUE) {
             sentencia();
         }
         esperar(TipoToken.FIN_BLOQUE);
-    }
-    
-    private boolean esTipoDato() {
-        return match(TipoToken.KEY_NAMPAT) || match(TipoToken.KEY_LINTA) || match(TipoToken.KEY_TENGWA);
-    }
-    
-    private TipoToken tipoDato() {
-        if (match(TipoToken.KEY_NAMPAT)) return TipoToken.KEY_NAMPAT;
-        if (match(TipoToken.KEY_LINTA)) return TipoToken.KEY_LINTA;
-        if (match(TipoToken.KEY_TENGWA)) return TipoToken.KEY_TENGWA;
-        error("Se esperaba un tipo de dato");
-        return null;
     }
     
     private boolean match(TipoToken tipo) {
@@ -390,12 +481,6 @@ public class AnalizadorSintactico {
         }
         error("Se esperaba: " + tipo);
         return new Token(TipoToken.ERROR, "", 0, 0);
-    }
-    
-    private void consumir(TipoToken tipo) {
-        if (!match(tipo)) {
-            error("Se esperaba: " + tipo);
-        }
     }
     
     private Token obtenerTokenActual() {

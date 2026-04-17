@@ -1,5 +1,6 @@
 nampat a = 12;
 nampat b = 8;
+nampat resultado = a + b;
 
-tengwa suma = a + b;
-tira(suma);
+tira("La suma es: ");
+tira(resultado);

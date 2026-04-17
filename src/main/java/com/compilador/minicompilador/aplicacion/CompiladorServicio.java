@@ -64,7 +64,8 @@ public class CompiladorServicio {
         // Fase 4: Generación de Código
         System.out.println("[FASE 4] GENERACIÓN DE CÓDIGO");
         List<String> codigoIntermedio = analizadorSintactico.getCodigoIntermedio();
-        List<String> codigoObjeto = generadorCodigo.generarCodigoObjeto(codigoIntermedio, tablaSimbolos);
+        generadorCodigo.generarCodigoObjeto(codigoIntermedio, tablaSimbolos);
+
         generadorCodigo.imprimirCodigoObjeto();
         
         // Ejecutar el código objeto
