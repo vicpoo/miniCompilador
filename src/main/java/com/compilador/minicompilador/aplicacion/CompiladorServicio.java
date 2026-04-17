@@ -52,8 +52,10 @@ public class CompiladorServicio {
         analizadorSintactico.imprimirArbolSintactico();
         analizadorSintactico.imprimirCodigoIntermedio();
         
-        // Fase 3: Análisis Semántico
+        // Fase 3: Análisis Semántico (MEJORADO)
         System.out.println("[FASE 3] ANÁLISIS SEMÁNTICO");
+        List<String> codigoIntermedio = analizadorSintactico.getCodigoIntermedio();
+        analizadorSemantico.setCodigoIntermedio(codigoIntermedio);
         if (!analizadorSemantico.analizar(tablaSimbolos)) {
             mostrarErrores(analizadorSemantico.getErrores());
             return false;
@@ -61,14 +63,12 @@ public class CompiladorServicio {
         analizadorSemantico.imprimirResultados();
         tablaSimbolos.imprimirTabla();
         
-        // Fase 4: Generación de Código
+        // Fase 4: Generación de Código (MEJORADA con optimización)
         System.out.println("[FASE 4] GENERACIÓN DE CÓDIGO");
-        List<String> codigoIntermedio = analizadorSintactico.getCodigoIntermedio();
         generadorCodigo.generarCodigoObjeto(codigoIntermedio, tablaSimbolos);
-
         generadorCodigo.imprimirCodigoObjeto();
         
-        // Ejecutar el código objeto
+        // Ejecutar el código objeto (MEJORADA con READ real)
         generadorCodigo.ejecutarCodigoObjeto(codigoIntermedio, tablaSimbolos);
         
         System.out.println(repetir("=", 60));
