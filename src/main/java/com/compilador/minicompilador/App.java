@@ -1,13 +1,11 @@
+//App.java
 package com.compilador.minicompilador;
 
-/**
- * Hello world!
- *
- */
-public class App 
-{
-    public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
+import com.compilador.minicompilador.presentacion.CompiladorCLI;
+
+public class App {
+    public static void main(String[] args) {
+        CompiladorCLI compiladorCLI = new CompiladorCLI();
+        compiladorCLI.iniciar(args);
     }
 }

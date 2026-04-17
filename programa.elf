@@ -1,0 +1,43 @@
+// Programa de ejemplo en Élfico
+// Hola Mundo y operaciones básicas
+
+nampat edad = 25;
+linta altura = 1.75;
+tengwa mensaje = "A Elbereth Gilthoniel!";
+
+tira(mensaje);
+tira("Edad: ");
+tira(edad);
+tira("Altura: ");
+tira(altura);
+
+// Operaciones matemáticas
+nampat suma = edad + 10;
+nampat producto = edad * 2;
+tira("Suma: ");
+tira(suma);
+tira("Producto: ");
+tira(producto);
+
+// Estructura condicional
+anin(edad > 18) {
+    tira("Eres mayor de edad en la Tierra Media");
+} penneth {
+    tira("Eres un joven hobbit");
+}
+
+// Ciclo while
+nampat contador = 1;
+nauva(contador <= 5) {
+    tira("Cuenta élfica: ");
+    tira(contador);
+    contador = contador + 1;
+}
+
+// Ciclo for
+ana(nampat i = 1; i <= 3; i = i + 1) {
+    tira("Valor de i: ");
+    tira(i);
+}
+
+tira("Namárië! (Adiós en élfico)");
